@@ -1,0 +1,1512 @@
+html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Word Scramble Pro - Advanced Word Game</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoiV29yZCBTY3JhbWJsZSBQcm8iLCJzaG9ydF9uYW1lIjoiV29yZFNjcmFtYmxlIiwiZGVzY3JpcHRpb24iOiJBZHZhbmNlZCBXb3JkIFNjcmFtYmxlIEdhbWUiLCJzdGFydF91cmwiOiIuLyIsImRpc3BsYXkiOiJzdGFuZGFsb25lIiwidGhlbWVfY29sb3IiOiIjNjY3ZWVhIiwiYmFja2dyb3VuZF9jb2xvciI6IiNmZmZmZmYifQ==">
+    <meta name="theme-color" content="#667eea">
+    <meta name="description" content="Advanced Word Scramble Game with multiple difficulty levels, achievements, and real-time scoring">
+    <meta name="keywords" content="word game, scramble, puzzle, brain training, vocabulary">
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --success-color: #48bb78;
+            --error-color: #e53e3e;
+            --warning-color: #ed8936;
+            --info-color: #3182ce;
+            --text-primary: #2d3748;
+            --text-secondary: #4a5568;
+            --bg-primary: #ffffff;
+            --bg-secondary: #f7fafc;
+            --border-color: #e2e8f0;
+            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+            --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+            --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.1);
+            --border-radius-sm: 8px;
+            --border-radius-md: 12px;
+            --border-radius-lg: 16px;
+            --border-radius-xl: 20px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: var(--primary-gradient);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: var(--text-primary);
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="75" cy="75" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="50" cy="10" r="0.5" fill="rgba(255,255,255,0.05)"/><circle cx="10" cy="60" r="0.5" fill="rgba(255,255,255,0.05)"/><circle cx="90" cy="40" r="0.5" fill="rgba(255,255,255,0.05)"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>') repeat;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .game-container {
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: var(--border-radius-xl);
+            padding: 2.5rem;
+            box-shadow: var(--shadow-xl);
+            max-width: 700px;
+            width: 95%;
+            text-align: center;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .game-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--primary-gradient);
+        }
+
+        .header {
+            margin-bottom: 2rem;
+            position: relative;
+        }
+
+        .title {
+            font-size: clamp(2rem, 5vw, 2.8rem);
+            font-weight: 800;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+            position: relative;
+        }
+
+        .subtitle {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+            opacity: 0.8;
+        }
+
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-item {
+            background: var(--primary-gradient);
+            color: white;
+            padding: 1.25rem 1rem;
+            border-radius: var(--border-radius-lg);
+            box-shadow: var(--shadow-md);
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .stat-item:hover::before {
+            left: 100%;
+        }
+
+        .stat-item:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            opacity: 0.9;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-value {
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin-top: 0.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .game-controls {
+            margin-bottom: 2rem;
+        }
+
+        .difficulty-selector {
+            margin-bottom: 1.5rem;
+        }
+
+        .difficulty-label {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .difficulty-buttons {
+            display: flex;
+            gap: 0.75rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .difficulty-btn {
+            padding: 0.875rem 1.75rem;
+            border: 2px solid transparent;
+            border-radius: 50px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: 0.9rem;
+            position: relative;
+            overflow: hidden;
+            min-width: 100px;
+        }
+
+        .difficulty-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: inherit;
+            opacity: 0.1;
+            transition: var(--transition);
+            transform: scale(0);
+            border-radius: inherit;
+        }
+
+        .difficulty-btn:hover::before {
+            transform: scale(1);
+        }
+
+        .difficulty-btn.easy {
+            background: var(--success-color);
+            color: white;
+        }
+
+        .difficulty-btn.medium {
+            background: var(--warning-color);
+            color: white;
+        }
+
+        .difficulty-btn.hard {
+            background: var(--error-color);
+            color: white;
+        }
+
+        .difficulty-btn.expert {
+            background: var(--secondary-gradient);
+            color: white;
+        }
+
+        .difficulty-btn.active {
+            transform: scale(1.05);
+            box-shadow: var(--shadow-lg);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .game-mode-selector {
+            margin-bottom: 1.5rem;
+        }
+
+        .mode-buttons {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .mode-btn {
+            padding: 0.75rem 1.5rem;
+            border: 2px solid var(--border-color);
+            border-radius: 25px;
+            background: var(--bg-primary);
+            color: var(--text-secondary);
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: 0.85rem;
+        }
+
+        .mode-btn.active {
+            background: var(--primary-gradient);
+            color: white;
+            border-color: transparent;
+        }
+
+        .progress-section {
+            margin-bottom: 2rem;
+        }
+
+        .progress-bar {
+            background: var(--border-color);
+            height: 12px;
+            border-radius: 6px;
+            margin: 1rem 0;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-fill {
+            background: var(--primary-gradient);
+            height: 100%;
+            transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+        }
+
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .level-indicator {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .word-display {
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            border: 3px dashed var(--border-color);
+            border-radius: var(--border-radius-lg);
+            padding: 2.5rem 1.5rem;
+            margin: 2rem 0;
+            min-height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .word-display::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, transparent 49%, rgba(102, 126, 234, 0.1) 50%, transparent 51%);
+            background-size: 20px 20px;
+            animation: move 20s linear infinite;
+            opacity: 0.3;
+        }
+
+        @keyframes move {
+            0% { transform: translateX(-20px) translateY(-20px); }
+            100% { transform: translateX(0) translateY(0); }
+        }
+
+        .scrambled-word {
+            font-size: clamp(2rem, 6vw, 3rem);
+            font-weight: 800;
+            color: var(--text-primary);
+            letter-spacing: 0.3rem;
+            text-transform: uppercase;
+            position: relative;
+            z-index: 1;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .word-length-indicator {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: var(--primary-gradient);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .hint-section {
+            margin: 1.5rem 0;
+        }
+
+        .hint {
+            background: linear-gradient(135deg, #e6fffa 0%, #b2f5ea 100%);
+            border-left: 4px solid #38b2ac;
+            padding: 1.25rem;
+            border-radius: 0 var(--border-radius-md) var(--border-radius-md) 0;
+            text-align: left;
+            box-shadow: var(--shadow-sm);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hint::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(180deg, #38b2ac, #319795);
+        }
+
+        .hint-label {
+            font-weight: 700;
+            color: #2c7a7b;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .hint-text {
+            color: var(--text-primary);
+            font-weight: 500;
+            line-height: 1.5;
+        }
+
+        .category-indicator {
+            background: var(--info-color);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .input-section {
+            margin: 2rem 0;
+            position: relative;
+        }
+
+        .answer-input {
+            width: 100%;
+            padding: 1.25rem 1.5rem;
+            font-size: 1.3rem;
+            border: 3px solid var(--border-color);
+            border-radius: var(--border-radius-lg);
+            text-align: center;
+            font-weight: 600;
+            transition: var(--transition);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            text-transform: uppercase;
+            letter-spacing: 0.1rem;
+        }
+
+        .answer-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .answer-input::placeholder {
+            color: var(--text-secondary);
+            opacity: 0.6;
+            text-transform: none;
+            letter-spacing: normal;
+        }
+
+        .input-validation {
+            position: absolute;
+            right: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1.5rem;
+            transition: var(--transition);
+        }
+
+        .input-validation.valid {
+            color: var(--success-color);
+        }
+
+        .input-validation.invalid {
+            color: var(--error-color);
+        }
+
+        .buttons-section {
+            margin: 2rem 0;
+        }
+
+        .buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .btn {
+            padding: 1rem 1.5rem;
+            border: none;
+            border-radius: 50px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            position: relative;
+            overflow: hidden;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            min-height: 50px;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn:hover::before {
+            left: 100%;
+        }
+
+        .btn-primary {
+            background: var(--primary-gradient);
+            color: white;
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-secondary {
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+            border: 2px solid var(--border-color);
+        }
+
+        .btn-success {
+            background: var(--success-color);
+            color: white;
+        }
+
+        .btn-warning {
+            background: var(--warning-color);
+            color: white;
+        }
+
+        .btn-danger {
+            background: var(--error-color);
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .btn:active {
+            transform: translateY(-1px);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn:disabled::before {
+            display: none;
+        }
+
+        .power-ups {
+            display: flex;
+            gap: 0.75rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .power-up-btn {
+            padding: 0.75rem;
+            border: 2px solid var(--border-color);
+            border-radius: 50%;
+            background: var(--bg-primary);
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: var(--transition);
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .power-up-btn:hover {
+            background: var(--primary-gradient);
+            color: white;
+            border-color: transparent;
+            transform: scale(1.1);
+        }
+
+        .power-up-btn.used {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .power-up-count {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: var(--error-color);
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .feedback {
+            margin: 1.5rem 0;
+            padding: 1.25rem;
+            border-radius: var(--border-radius-lg);
+            font-weight: 600;
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feedback::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+        }
+
+        .feedback.correct {
+            background: linear-gradient(135deg, #c6f6d5 0%, #9ae6b4 100%);
+            color: #22543d;
+            border: 2px solid var(--success-color);
+        }
+
+        .feedback.correct::before {
+            background: var(--success-color);
+        }
+
+        .feedback.incorrect {
+            background: linear-gradient(135deg, #fed7d7 0%, #feb2b2 100%);
+            color: #742a2a;
+            border: 2px solid var(--error-color);
+        }
+
+        .feedback.incorrect::before {
+            background: var(--error-color);
+        }
+
+        .feedback.info {
+            background: linear-gradient(135deg, #bee3f8 0%, #90cdf4 100%);
+            color: #2a4365;
+            border: 2px solid var(--info-color);
+        }
+
+        .feedback.info::before {
+            background: var(--info-color);
+        }
+
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+            color: #667eea;
+            font-weight: 600;
+            padding: 2rem;
+        }
+
+        .spinner {
+            width: 32px;
+            height: 32px;
+            border: 3px solid var(--border-color);
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .celebration {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 10000;
+        }
+
+        .confetti {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            animation: confetti-fall 3s linear infinite;
+        }
+
+        @keyframes confetti-fall {
+            0% {
+                transform: translateY(-100vh) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh) rotate(720deg);
+                opacity: 0;
+            }
+        }
+
+        .achievement-popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+            color: #744210;
+            padding: 2rem;
+            border-radius: var(--border-radius-xl);
+            font-weight: 700;
+            border: 3px solid #d69e2e;
+            box-shadow: var(--shadow-xl);
+            z-index: 9999;
+            text-align: center;
+            max-width: 400px;
+            animation: achievementPop 3s ease-in-out;
+        }
+
+        @keyframes achievementPop {
+            0% { transform: translate(-50%, -50%) scale(0); }
+            10% { transform: translate(-50%, -50%) scale(1.1); }
+            20% { transform: translate(-50%, -50%) scale(1); }
+            90% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+            100% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+        }
+
+        .achievement-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .achievement-title {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .achievement-description {
+            font-size: 1rem;
+            opacity: 0.8;
+        }
+
+        .combo-indicator {
+            position: absolute;
+            top: 1rem;
+            left: 1rem;
+            background: var(--secondary-gradient);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            transform: scale(0);
+            transition: var(--transition);
+        }
+
+        .combo-indicator.show {
+            transform: scale(1);
+            animation: pulse 0.5s ease-in-out;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        .settings-panel {
+            position: fixed;
+            top: 0;
+            right: -400px;
+            width: 400px;
+            height: 100vh;
+            background: var(--bg-primary);
+            box-shadow: var(--shadow-xl);
+            padding: 2rem;
+            transition: var(--transition);
+            z-index: 9998;
+            overflow-y: auto;
+        }
+
+        .settings-panel.open {
+            right: 0;
+        }
+
+        .settings-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 9997;
+            opacity: 0;
+            visibility: hidden;
+            transition: var(--transition);
+        }
+
+        .settings-overlay.open {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .settings-btn {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: var(--primary-gradient);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 1.2rem;
+            box-shadow: var(--shadow-lg);
+            transition: var(--transition);
+            z-index: 1000;
+        }
+
+        .settings-btn:hover {
+            transform: scale(1.1);
+        }
+
+        .leaderboard {
+            background: var(--bg-secondary);
+            border-radius: var(--border-radius-lg);
+            padding: 1.5rem;
+            margin: 1rem 0;
+        }
+
+        .leaderboard-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        .leaderboard-entry {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            border-radius: var(--border-radius-sm);
+            margin-bottom: 0.5rem;
+            background: var(--bg-primary);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .leaderboard-rank {
+            font-weight: 700;
+            color: var(--primary-gradient);
+            min-width: 30px;
+        }
+
+        .leaderboard-score {
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .sound-controls {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin: 1rem 0;
+        }
+
+        .sound-btn {
+            padding: 0.75rem;
+            border: 2px solid var(--border-color);
+            border-radius: 50%;
+            background: var(--bg-primary);
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: var(--transition);
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .sound-btn.active {
+            background: var(--primary-gradient);
+            color: white;
+            border-color: transparent;
+        }
+
+        @media (max-width: 768px) {
+            .game-container {
+                padding: 1.5rem;
+                margin: 1rem;
+                width: calc(100% - 2rem);
+            }
+            
+            .title {
+                font-size: 2rem;
+            }
+            
+            .scrambled-word {
+                font-size: 2rem;
+                letter-spacing: 0.2rem;
+            }
+            
+            .stats-container {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .buttons {
+                grid-template-columns: 1fr;
+            }
+            
+            .difficulty-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .difficulty-btn {
+                width: 100%;
+                max-width: 200px;
+            }
+
+            .settings-panel {
+                width: 100%;
+                right: -100%;
+            }
+
+            .settings-btn {
+                top: 1rem;
+                right: 1rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .game-container {
+                padding: 1rem;
+            }
+            
+            .word-display {
+                padding: 1.5rem 1rem;
+            }
+            
+            .answer-input {
+                font-size: 1.1rem;
+                padding: 1rem;
+            }
+            
+            .btn {
+                padding: 0.875rem 1.25rem;
+                font-size: 0.9rem;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-primary: #1a202c;
+                --bg-secondary: #2d3748;
+                --text-primary: #f7fafc;
+                --text-secondary: #e2e8f0;
+                --border-color: #4a5568;
+            }
+            
+            .game-container {
+                background: rgba(26, 32, 44, 0.98);
+                color: var(--text-primary);
+            }
+            
+            .word-display {
+                background: linear-gradient(135deg, #2d3748 0%, #4a5568 100%);
+                border-color: var(--border-color);
+            }
+            
+            .scrambled-word {
+                color: var(--text-primary);
+            }
+        }
+    </style>
+</head>
+<body>
+    <button class="settings-btn" id="settingsBtn" aria-label="Open Settings">
+        <i class="fas fa-cog"></i>
+    </button>
+
+    <div class="settings-overlay" id="settingsOverlay"></div>
+    
+    <div class="settings-panel" id="settingsPanel">
+        <h2>Game Settings</h2>
+        <div class="sound-controls">
+            <button class="sound-btn active" id="soundToggle" title="Toggle Sound">
+                <i class="fas fa-volume-up"></i>
+            </button>
+            <button class="sound-btn active" id="musicToggle" title="Toggle Music">
+                <i class="fas fa-music"></i>
+            </button>
+        </div>
+        
+        <div class="leaderboard">
+            <div class="leaderboard-title">
+                <i class="fas fa-trophy"></i> High Scores
+            </div>
+            <div id="leaderboardList">
+                <div class="leaderboard-entry">
+                    <span class="leaderboard-rank">#1</span>
+                    <span>Your Best</span>
+                    <span class="leaderboard-score" id="personalBest">0</span>
+                </div>
+            </div>
+        </div>
+        
+        <div style="margin-top: 2rem;">
+            <button class="btn btn-danger" id="resetStatsBtn">
+                <i class="fas fa-trash"></i> Reset Statistics
+            </button>
+        </div>
+    </div>
+
+    <div class="game-container">
+        <div class="combo-indicator" id="comboIndicator">
+            <i class="fas fa-fire"></i> COMBO x<span id="comboCount">0</span>
+        </div>
+
+        <div class="header">
+            <h1 class="title">
+                <i class="fas fa-puzzle-piece"></i> Word Scramble Pro
+            </h1>
+            <p class="subtitle">Challenge your vocabulary and reflexes</p>
+        </div>
+
+        <div class="stats-container">
+            <div class="stat-item">
+                <div class="stat-label">Level</div>
+                <div class="stat-value">
+                    <i class="fas fa-layer-group"></i>
+                    <span id="level">1</span>
+                </div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Score</div>
+                <div class="stat-value">
+                    <i class="fas fa-star"></i>
+                    <span id="score">0</span>
+                </div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Streak</div>
+                <div class="stat-value">
+                    <i class="fas fa-fire"></i>
+                    <span id="streak">0</span>
+                </div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Time</div>
+                <div class="stat-value">
+                    <i class="fas fa-clock"></i>
+                    <span id="timer">60</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="game-controls">
+            <div class="difficulty-selector">
+                <div class="difficulty-label">
+                    <i class="fas fa-sliders-h"></i> Difficulty Level
+                </div>
+                <div class="difficulty-buttons">
+                    <button class="difficulty-btn easy active" data-difficulty="easy">
+                        <i class="fas fa-leaf"></i> Easy
+                    </button>
+                    <button class="difficulty-btn medium" data-difficulty="medium">
+                        <i class="fas fa-fire"></i> Medium
+                    </button>
+                    <button class="difficulty-btn hard" data-difficulty="hard">
+                        <i class="fas fa-bolt"></i> Hard
+                    </button>
+                    <button class="difficulty-btn expert" data-difficulty="expert">
+                        <i class="fas fa-crown"></i> Expert
+                    </button>
+                </div>
+            </div>
+
+            <div class="game-mode-selector">
+                <div class="mode-buttons">
+                    <button class="mode-btn active" data-mode="classic">
+                        <i class="fas fa-clock"></i> Classic
+                    </button>
+                    <button class="mode-btn" data-mode="endless">
+                        <i class="fas fa-infinity"></i> Endless
+                    </button>
+                    <button class="mode-btn" data-mode="speed">
+                        <i class="fas fa-tachometer-alt"></i> Speed
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="progress-section">
+            <div class="level-indicator">
+                <span>Level Progress</span>
+                <span id="progressText">0/10</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+        </div>
+
+        <div class="game-area">
+            <div class="word-display">
+                <div class="word-length-indicator" id="wordLength">5 letters</div>
+                <div class="scrambled-word" id="scrambledWord">Loading...</div>
+            </div>
+
+            <div class="hint-section">
+                <div class="hint" id="hintContainer" style="display: none;">
+                    <div class="hint-label">
+                        <i class="fas fa-lightbulb"></i> Hint
+                        <span class="category-indicator" id="categoryIndicator">General</span>
+                    </div>
+                    <div class="hint-text" id="hintText"></div>
+                </div>
+            </div>
+
+            <div class="input-section">
+                <input type="text" class="answer-input" id="answerInput" 
+                       placeholder="Enter your answer..." 
+                       autocomplete="off" 
+                       spellcheck="false"
+                       maxlength="20">
+                <div class="input-validation" id="inputValidation"></div>
+            </div>
+
+            <div class="feedback" id="feedback" style="display: none;"></div>
+
+            <div class="buttons-section">
+                <div class="buttons">
+                    <button class="btn btn-primary" id="submitBtn">
+                        <i class="fas fa-check"></i> Submit
+                    </button>
+                    <button class="btn btn-secondary" id="hintBtn">
+                        <i class="fas fa-lightbulb"></i> Hint
+                    </button>
+                    <button class="btn btn-warning" id="skipBtn">
+                        <i class="fas fa-forward"></i> Skip
+                    </button>
+                    <button class="btn btn-secondary" id="newGameBtn">
+                        <i class="fas fa-refresh"></i> New Game
+                    </button>
+                </div>
+
+                <div class="power-ups">
+                    <button class="power-up-btn" id="shuffleBtn" title="Shuffle Letters">
+                        <i class="fas fa-random"></i>
+                        <span class="power-up-count" id="shuffleCount">3</span>
+                    </button>
+                    <button class="power-up-btn" id="revealBtn" title="Reveal Letter">
+                        <i class="fas fa-eye"></i>
+                        <span class="power-up-count" id="revealCount">2</span>
+                    </button>
+                    <button class="power-up-btn" id="timeBoostBtn" title="Time Boost">
+                        <i class="fas fa-plus-circle"></i>
+                        <span class="power-up-count" id="timeBoostCount">1</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="loading" id="loadingIndicator" style="display: none;">
+            <div class="spinner"></div>
+            <span>Loading new word...</span>
+        </div>
+    </div>
+
+    <div class="celebration" id="celebration"></div>
+
+    <script>
+        class WordScrambleGamePro {
+            constructor() {
+                this.initializeGameState();
+                this.initializeElements();
+                this.initializeAudio();
+                this.bindEvents();
+                this.loadGameData();
+                this.startGame();
+            }
+
+            initializeGameState() {
+                this.currentWord = '';
+                this.currentHint = '';
+                this.currentCategory = '';
+                this.scrambledWord = '';
+                this.level = 1;
+                this.score = 0;
+                this.streak = 0;
+                this.combo = 0;
+                this.difficulty = 'easy';
+                this.gameMode = 'classic';
+                this.timeLeft = 60;
+                this.timer = null;
+                this.hintsUsed = 0;
+                this.wordsCompleted = 0;
+                this.gameActive = false;
+                this.powerUps = {
+                    shuffle: 3,
+                    reveal: 2,
+                    timeBoost: 1
+                };
+                this.achievements = [];
+                this.statistics = {
+                    gamesPlayed: 0,
+                    totalScore: 0,
+                    bestStreak: 0,
+                    wordsGuessed: 0,
+                    averageTime: 0
+                };
+                this.settings = {
+                    soundEnabled: true,
+                    musicEnabled: true,
+                    animations: true
+                };
+                
+                this.wordDatabase = {
+                    easy: [],
+                    medium: [],
+                    hard: [],
+                    expert: []
+                };
+                
+                this.usedWords = new Set();
+                this.revealedLetters = new Set();
+            }
+
+            initializeElements() {
+                this.elements = {
+                    scrambledWord: document.getElementById('scrambledWord'),
+                    answerInput: document.getElementById('answerInput'),
+                    submitBtn: document.getElementById('submitBtn'),
+                    hintBtn: document.getElementById('hintBtn'),
+                    skipBtn: document.getElementById('skipBtn'),
+                    newGameBtn: document.getElementById('newGameBtn'),
+                    feedback: document.getElementById('feedback'),
+                    hintContainer: document.getElementById('hintContainer'),
+                    hintText: document.getElementById('hintText'),
+                    categoryIndicator: document.getElementById('categoryIndicator'),
+                    level: document.getElementById('level'),
+                    score: document.getElementById('score'),
+                    streak: document.getElementById('streak'),
+                    timer: document.getElementById('timer'),
+                    progressFill: document.getElementById('progressFill'),
+                    progressText: document.getElementById('progressText'),
+                    wordLength: document.getElementById('wordLength'),
+                    loadingIndicator: document.getElementById('loadingIndicator'),
+                    celebration: document.getElementById('celebration'),
+                    comboIndicator: document.getElementById('comboIndicator'),
+                    comboCount: document.getElementById('comboCount'),
+                    inputValidation: document.getElementById('inputValidation'),
+                    difficultyBtns: document.querySelectorAll('.difficulty-btn'),
+                    modeBtns: document.querySelectorAll('.mode-btn'),
+                    settingsBtn: document.getElementById('settingsBtn'),
+                    settingsPanel: document.getElementById('settingsPanel'),
+                    settingsOverlay: document.getElementById('settingsOverlay'),
+                    soundToggle: document.getElementById('soundToggle'),
+                    musicToggle: document.getElementById('musicToggle'),
+                    personalBest: document.getElementById('personalBest'),
+                    resetStatsBtn: document.getElementById('resetStatsBtn'),
+                    shuffleBtn: document.getElementById('shuffleBtn'),
+                    revealBtn: document.getElementById('revealBtn'),
+                    timeBoostBtn: document.getElementById('timeBoostBtn'),
+                    shuffleCount: document.getElementById('shuffleCount'),
+                    revealCount: document.getElementById('revealCount'),
+                    timeBoostCount: document.getElementById('timeBoostCount')
+                };
+            }
+
+            initializeAudio() {
+                this.audioContext = null;
+                this.sounds = {};
+                
+                try {
+                    this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    this.createSounds();
+                } catch (error) {
+                    console.warn('Audio not supported:', error);
+                }
+            }
+
+            createSounds() {
+                const createTone = (frequency, duration, type = 'sine') => {
+                    return () => {
+                        if (!this.settings.soundEnabled || !this.audioContext) return;
+                        
+                        const oscillator = this.audioContext.createOscillator();
+                        const gainNode = this.audioContext.createGain();
+                        
+                        oscillator.connect(gainNode);
+                        gainNode.connect(this.audioContext.destination);
+                        
+                        oscillator.frequency.setValueAtTime(frequency, this.audioContext.currentTime);
+                        oscillator.type = type;
+                        
+                        gainNode.gain.setValueAtTime(0.1, this.audioContext.currentTime);
+                        gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + duration);
+                        
+                        oscillator.start(this.audioContext.currentTime);
+                        oscillator.stop(this.audioContext.currentTime + duration);
+                    };
+                };
+
+                this.sounds = {
+                    correct: createTone(523.25, 0.3),
+                    incorrect: createTone(220, 0.5),
+                    hint: createTone(440, 0.2),
+                    levelUp: createTone(659.25, 0.4),
+                    powerUp: createTone(880, 0.3),
+                    tick: createTone(800, 0.1)
+                };
+            }
+
+            bindEvents() {
+                this.elements.submitBtn.addEventListener('click', () => this.submitAnswer());
+                this.elements.hintBtn.addEventListener('click', () => this.showHint());
+                this.elements.skipBtn.addEventListener('click', () => this.skipWord());
+                this.elements.newGameBtn.addEventListener('click', () => this.newGame());
+                
+                this.elements.answerInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') this.submitAnswer();
+                });
+
+                this.elements.answerInput.addEventListener('input', (e) => {
+                    this.validateInput(e.target.value);
+                    this.elements.feedback.style.display = 'none';
+                });
+
+                this.elements.difficultyBtns.forEach(btn => {
+                    btn.addEventListener('click', () => this.changeDifficulty(btn.dataset.difficulty));
+                });
+
+                this.elements.modeBtns.forEach(btn => {
+                    btn.addEventListener('click', () => this.changeGameMode(btn.dataset.mode));
+                });
+
+                this.elements.settingsBtn.addEventListener('click', () => this.toggleSettings());
+                this.elements.settingsOverlay.addEventListener('click', () => this.closeSettings());
+                
+                this.elements.soundToggle.addEventListener('click', () => this.toggleSound());
+                this.elements.musicToggle.addEventListener('click', () => this.toggleMusic());
+                this.elements.resetStatsBtn.addEventListener('click', () => this.resetStatistics());
+
+                this.elements.shuffleBtn.addEventListener('click', () => this.usePowerUp('shuffle'));
+                this.elements.revealBtn.addEventListener('click', () => this.usePowerUp('reveal'));
+                this.elements.timeBoostBtn.addEventListener('click', () => this.usePowerUp('timeBoost'));
+
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape') this.closeSettings();
+                    if (e.key === ' ' && e.target !== this.elements.answerInput) {
+                        e.preventDefault();
+                        this.usePowerUp('shuffle');
+                    }
+                });
+
+                window.addEventListener('beforeunload', () => this.saveGameData());
+                
+                document.addEventListener('visibilitychange', () => {
+                    if (document.hidden && this.gameActive) {
+                        this.pauseGame();
+                    } else if (!document.hidden && this.gameActive) {
+                        this.resumeGame();
+                    }
+                });
+            }
+
+            async loadGameData() {
+                try {
+                    this.showLoading(true);
+                    
+                    const savedData = localStorage.getItem('wordScrambleProData');
+                    if (savedData) {
+                        const data = JSON.parse(savedData);
+                        this.statistics = { ...this.statistics, ...data.statistics };
+                        this.settings = { ...this.settings, ...data.settings };
+                        this.achievements = data.achievements || [];
+                    }
+
+                    await this.loadWordDatabase();
+                    this.updateSettingsUI();
+                    this.updatePersonalBest();
+                    
+                } catch (error) {
+                    console.error('Error loading game data:', error);
+                } finally {
+                    this.showLoading(false);
+                }
+            }
+
+            async loadWordDatabase() {
+                const easyWords = [
+                    { word: 'cat', hint: 'A small domesticated carnivorous mammal', category: 'Animals' },
+                    { word: 'dog', hint: 'A domesticated carnivorous mammal', category: 'Animals' },
+                    { word: 'sun', hint: 'The star around which the earth orbits', category: 'Nature' },
+                    { word: 'moon', hint: 'The natural satellite of the earth', category: 'Nature' },
+                    { word: 'tree', hint: 'A woody perennial plant', category: 'Nature' },
+                    { word: 'book', hint: 'A written or printed work consisting of pages', category: 'Objects' },
+                    { word: 'car', hint: 'A road vehicle, typically with four wheels', category: 'Transport' },
+                    { word: 'house', hint: 'A building for human habitation', category: 'Buildings' },
+                    { word: 'water', hint: 'A transparent liquid that forms seas and lakes', category: 'Nature' },
+                    { word: 'fire', hint: 'Combustion or burning process', category: 'Elements' },
+                    { word: 'bird', hint: 'A warm-blooded vertebrate with feathers', category: 'Animals' },
+                    { word: 'fish', hint: 'An aquatic vertebrate with gills', category: 'Animals' },
+                    { word: 'hand', hint: 'The end part of a person\'s arm', category: 'Body' },
+                    { word: 'foot', hint: 'The lower extremity of the leg', category: 'Body' },
+                    { word: 'head', hint: 'The upper part of the human body', category: 'Body' }
+                ];
+
+                const mediumWords = [
+                    { word: 'computer', hint: 'An electronic device for processing data', category: 'Technology' },
+                    { word: 'elephant', hint: 'A very large mammal with a trunk', category: 'Animals' },
+                    { word: 'mountain', hint: 'A large natural elevation of earth\'s surface', category: 'Geography' },
+                    { word: 'rainbow', hint: 'A meteorological phenomenon with colors', category: 'Nature' },
+                    { word: 'butterfly', hint: 'A nectar-feeding insect with colorful wings', category: 'Animals' },
+                    { word: 'telephone', hint: 'A device for voice communication', category: 'Technology' },
+                    { word: 'chocolate', hint: 'A sweet food preparation from cacao', category: 'Food' },
+                    { word: 'umbrella', hint: 'A collapsible canopy for protection', category: 'Objects' },
+                    { word: 'keyboard', hint: 'A panel of keys for input', category: 'Technology' },
+                    { word: 'sandwich', hint: 'Food between two pieces of bread', category: 'Food' },
+                    { word: 'bicycle', hint: 'A two-wheeled vehicle powered by pedaling', category: 'Transport' },
+                    { word: 'library', hint: 'A building containing books for reading', category: 'Buildings' },
+                    { word: 'hospital', hint: 'A place for medical treatment', category: 'Buildings' },
+                    { word: 'teacher', hint: 'A person who instructs students', category: 'Professions' },
+                    { word: 'student', hint: 'A person who is learning', category: 'Education' }
+                ];
+
+                const hardWords = [
+                    { word: 'extraordinary', hint: 'Very unusual or remarkable', category: 'Adjectives' },
+                    { word: 'philosophical', hint: 'Relating to the study of knowledge', category: 'Academic' },
+                    { word: 'metamorphosis', hint: 'A complete change of form', category: 'Science' },
+                    { word: 'serendipity', hint: 'Pleasant surprise or fortunate accident', category: 'Abstract' },
+                    { word: 'kaleidoscope', hint: 'A tube with mirrors and colored pieces', category: 'Objects' },
+                    { word: 'entrepreneur', hint: 'A person who starts businesses', category: 'Business' },
+                    { word: 'procrastination', hint: 'The action of delaying tasks', category: 'Psychology' },
+                    { word: 'onomatopoeia', hint: 'Words that imitate sounds', category: 'Language' },
+                    { word: 'juxtaposition', hint: 'Placing things close together for contrast', category: 'Art' },
+                    { word: 'perspicacious', hint: 'Having keen insight and understanding', category: 'Adjectives' },
+                    { word: 'quintessential', hint: 'Representing the perfect example', category: 'Adjectives' },
+                    { word: 'ubiquitous', hint: 'Present everywhere at the same time', category: 'Adjectives' },
+                    { word: 'ephemeral', hint: 'Lasting for a very short time', category: 'Adjectives' },
+                    { word: 'cacophony', hint: 'A harsh, discordant mixture of sounds', category: 'Music' },
+                    { word: 'labyrinthine', hint: 'Like a labyrinth; very complicated', category: 'Adjectives' }
+                ];
+
+                const expertWords = [
+                    { word: 'antidisestablishmentarianism', hint: 'Opposition to withdrawal of state support', category: 'Politics' },
+                    { word: 'pneumonoultramicroscopicsilicovolcanoconosis', hint: 'A lung disease from inhaling fine silica dust', category: 'Medical' },
+                    { word: 'floccinaucinihilipilification', hint: 'The action of estimating something as worthless', category: 'Academic' },
+                    { word: 'supercalifragilisticexpialidocious', hint: 'Extraordinarily good; wonderful', category: 'Fantasy' },
+                    { word: 'pseudopseudohypoparathyroidism', hint: 'A rare inherited disorder', category: 'Medical' },
+                    { word: 'hippopotomonstrosesquippedaliophobia', hint: 'Fear of long words', category: 'Psychology' },
+                    { word: 'electroencephalography', hint: 'Recording of brain electrical activity', category: 'Medical' },
+                    { word: 'psychopharmacology', hint: 'Study of drug effects on mind and behavior', category: 'Science' },
+                    { word: 'otorhinolaryngology', hint: 'Medical specialty of ear, nose, and throat', category: 'Medical' },
+                    { word: 'immunoelectrophoresis', hint: 'Laboratory technique for protein analysis', category: 'Science' }
+                ];
+
+                this.wordDatabase.easy = easyWords;
+                this.wordDatabase.medium = mediumWords;
+                this.wordDatabase.hard = hardWords;
+                this.wordDatabase.expert = expertWords;
+            }
+
+            startGame() {
+                this.gameActive = true;
+                this.generateNewWord();
+                this.startTimer();
+                this.updateDisplay();
+            }
+
+            newGame() {
+                this.level = 1;
