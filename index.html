@@ -1509,4 +1509,592 @@ html
             }
 
             newGame() {
-                this.level = 1;
+                this.level = 1;this.score = 0;
+                this.streak = 0;
+                this.combo = 0;
+                this.timeLeft = this.getTimeForMode();
+                this.hintsUsed = 0;
+                this.wordsCompleted = 0;
+                this.usedWords.clear();
+                this.revealedLetters.clear();
+                this.powerUps = {
+                    shuffle: 3,
+                    reveal: 2,
+                    timeBoost: 1
+                };
+                
+                this.statistics.gamesPlayed++;
+                this.gameActive = true;
+                
+                this.elements.feedback.style.display = 'none';
+                this.elements.hintContainer.style.display = 'none';
+                this.elements.comboIndicator.classList.remove('show');
+                
+                this.generateNewWord();
+                this.startTimer();
+                this.updateDisplay();
+                this.updatePowerUpDisplay();
+                
+                this.showFeedback('New game started! Good luck!', 'info');
+            }
+
+            getTimeForMode() {
+                const times = {
+                    classic: 60,
+                    endless: 120,
+                    speed: 30
+                };
+                return times[this.gameMode] || 60;
+            }
+
+            generateNewWord() {
+                this.showLoading(true);
+                
+                setTimeout(() => {
+                    const availableWords = this.wordDatabase[this.difficulty].filter(
+                        wordObj => !this.usedWords.has(wordObj.word)
+                    );
+                    
+                    if (availableWords.length === 0) {
+                        this.usedWords.clear();
+                        this.generateNewWord();
+                        return;
+                    }
+                    
+                    const randomIndex = Math.floor(Math.random() * availableWords.length);
+                    const selectedWord = availableWords[randomIndex];
+                    
+                    this.currentWord = selectedWord.word.toLowerCase();
+                    this.currentHint = selectedWord.hint;
+                    this.currentCategory = selectedWord.category;
+                    this.usedWords.add(this.currentWord);
+                    this.revealedLetters.clear();
+                    
+                    this.scrambledWord = this.scrambleWord(this.currentWord);
+                    
+                    this.elements.scrambledWord.textContent = this.scrambledWord.toUpperCase();
+                    this.elements.wordLength.textContent = `${this.currentWord.length} letters`;
+                    this.elements.categoryIndicator.textContent = this.currentCategory;
+                    this.elements.answerInput.value = '';
+                    this.elements.answerInput.maxLength = this.currentWord.length;
+                    this.elements.hintContainer.style.display = 'none';
+                    this.elements.inputValidation.textContent = '';
+                    
+                    this.showLoading(false);
+                    this.elements.answerInput.focus();
+                }, 500);
+            }
+
+            scrambleWord(word) {
+                const letters = word.split('');
+                let scrambled;
+                let attempts = 0;
+                
+                do {
+                    scrambled = [...letters].sort(() => Math.random() - 0.5).join('');
+                    attempts++;
+                } while (scrambled === word && attempts < 10);
+                
+                return scrambled;
+            }
+
+            submitAnswer() {
+                if (!this.gameActive) return;
+                
+                const userAnswer = this.elements.answerInput.value.toLowerCase().trim();
+                
+                if (!userAnswer) {
+                    this.showFeedback('Please enter an answer!', 'info');
+                    return;
+                }
+                
+                if (userAnswer === this.currentWord) {
+                    this.handleCorrectAnswer();
+                } else {
+                    this.handleIncorrectAnswer();
+                }
+            }
+
+            handleCorrectAnswer() {
+                this.sounds.correct();
+                this.streak++;
+                this.combo++;
+                this.wordsCompleted++;
+                
+                const baseScore = this.calculateScore();
+                this.score += baseScore;
+                
+                this.showFeedback(`Correct! +${baseScore} points`, 'correct');
+                this.createCelebration();
+                
+                if (this.combo >= 3) {
+                    this.showCombo();
+                }
+                
+                this.checkAchievements();
+                this.checkLevelUp();
+                
+                setTimeout(() => {
+                    this.generateNewWord();
+                }, 1500);
+                
+                this.updateDisplay();
+            }
+
+            handleIncorrectAnswer() {
+                this.sounds.incorrect();
+                this.streak = 0;
+                this.combo = 0;
+                this.elements.comboIndicator.classList.remove('show');
+                
+                this.showFeedback(`Incorrect! The word was "${this.currentWord.toUpperCase()}"`, 'incorrect');
+                
+                setTimeout(() => {
+                    this.generateNewWord();
+                }, 2000);
+                
+                this.updateDisplay();
+            }
+
+            calculateScore() {
+                const difficultyMultiplier = {
+                    easy: 10,
+                    medium: 20,
+                    hard: 40,
+                    expert: 80
+                };
+                
+                const modeMultiplier = {
+                    classic: 1,
+                    endless: 1.2,
+                    speed: 1.5
+                };
+                
+                let score = difficultyMultiplier[this.difficulty] * modeMultiplier[this.gameMode];
+                
+                if (this.streak > 1) score *= (1 + (this.streak - 1) * 0.1);
+                if (this.combo >= 3) score *= 1.5;
+                if (this.hintsUsed === 0) score *= 1.2;
+                
+                const timeBonus = Math.max(0, this.timeLeft / 10);
+                score += timeBonus;
+                
+                return Math.round(score);
+            }
+
+            showHint() {
+                if (this.hintsUsed >= 3) {
+                    this.showFeedback('No more hints available!', 'info');
+                    return;
+                }
+                
+                this.sounds.hint();
+                this.hintsUsed++;
+                
+                this.elements.hintText.textContent = this.currentHint;
+                this.elements.hintContainer.style.display = 'block';
+                
+                this.elements.hintBtn.textContent = `Hint (${3 - this.hintsUsed} left)`;
+                if (this.hintsUsed >= 3) {
+                    this.elements.hintBtn.disabled = true;
+                }
+            }
+
+            skipWord() {
+                this.streak = 0;
+                this.combo = 0;
+                this.elements.comboIndicator.classList.remove('show');
+                
+                this.showFeedback(`Skipped! The word was "${this.currentWord.toUpperCase()}"`, 'info');
+                
+                setTimeout(() => {
+                    this.generateNewWord();
+                }, 1500);
+                
+                this.updateDisplay();
+            }
+
+            usePowerUp(type) {
+                if (this.powerUps[type] <= 0) {
+                    this.showFeedback('No more power-ups of this type!', 'info');
+                    return;
+                }
+                
+                this.powerUps[type]--;
+                this.sounds.powerUp();
+                
+                switch (type) {
+                    case 'shuffle':
+                        this.shuffleScrambledWord();
+                        break;
+                    case 'reveal':
+                        this.revealLetter();
+                        break;
+                    case 'timeBoost':
+                        this.addTime();
+                        break;
+                }
+                
+                this.updatePowerUpDisplay();
+            }
+
+            shuffleScrambledWord() {
+                this.scrambledWord = this.scrambleWord(this.currentWord);
+                this.elements.scrambledWord.textContent = this.scrambledWord.toUpperCase();
+                this.showFeedback('Letters shuffled!', 'info');
+            }
+
+            revealLetter() {
+                const unrevealedPositions = [];
+                for (let i = 0; i < this.currentWord.length; i++) {
+                    if (!this.revealedLetters.has(i)) {
+                        unrevealedPositions.push(i);
+                    }
+                }
+                
+                if (unrevealedPositions.length === 0) {
+                    this.showFeedback('All letters already revealed!', 'info');
+                    return;
+                }
+                
+                const randomPos = unrevealedPositions[Math.floor(Math.random() * unrevealedPositions.length)];
+                this.revealedLetters.add(randomPos);
+                
+                const currentInput = this.elements.answerInput.value.toLowerCase();
+                const newInput = currentInput.padEnd(this.currentWord.length, '_').split('');
+                newInput[randomPos] = this.currentWord[randomPos];
+                
+                this.elements.answerInput.value = newInput.join('').replace(/_/g, '');
+                this.showFeedback(`Letter revealed at position ${randomPos + 1}!`, 'info');
+            }
+
+            addTime() {
+                const timeBonus = 15;
+                this.timeLeft += timeBonus;
+                this.showFeedback(`+${timeBonus} seconds added!`, 'info');
+                this.updateDisplay();
+            }
+
+            startTimer() {
+                this.clearTimer();
+                this.timer = setInterval(() => {
+                    this.timeLeft--;
+                    
+                    if (this.timeLeft <= 10 && this.timeLeft > 0) {
+                        this.sounds.tick();
+                        this.elements.timer.style.color = 'var(--error-color)';
+                    }
+                    
+                    if (this.timeLeft <= 0) {
+                        this.gameOver();
+                    }
+                    
+                    this.updateDisplay();
+                }, 1000);
+            }
+
+            clearTimer() {
+                if (this.timer) {
+                    clearInterval(this.timer);
+                    this.timer = null;
+                }
+            }
+
+            pauseGame() {
+                this.clearTimer();
+                this.gameActive = false;
+            }
+
+            resumeGame() {
+                if (this.timeLeft > 0) {
+                    this.startTimer();
+                    this.gameActive = true;
+                }
+            }
+
+            gameOver() {
+                this.gameActive = false;
+                this.clearTimer();
+                
+                this.statistics.totalScore += this.score;
+                this.statistics.wordsGuessed += this.wordsCompleted;
+                this.statistics.bestStreak = Math.max(this.statistics.bestStreak, this.streak);
+                
+                this.showFeedback(`Game Over! Final Score: ${this.score}`, 'info');
+                this.saveGameData();
+                this.updatePersonalBest();
+                
+                setTimeout(() => {
+                    if (confirm('Game Over! Would you like to play again?')) {
+                        this.newGame();
+                    }
+                }, 2000);
+            }
+
+            validateInput(input) {
+                const validation = this.elements.inputValidation;
+                
+                if (!input) {
+                    validation.textContent = '';
+                    return;
+                }
+                
+                if (input.length === this.currentWord.length) {
+                    if (input.toLowerCase() === this.currentWord) {
+                        validation.innerHTML = '<i class="fas fa-check"></i>';
+                        validation.className = 'input-validation valid';
+                    } else {
+                        validation.innerHTML = '<i class="fas fa-times"></i>';
+                        validation.className = 'input-validation invalid';
+                    }
+                } else {
+                    validation.textContent = '';
+                }
+            }
+
+            changeDifficulty(newDifficulty) {
+                this.difficulty = newDifficulty;
+                this.usedWords.clear();
+                
+                this.elements.difficultyBtns.forEach(btn => {
+                    btn.classList.toggle('active', btn.dataset.difficulty === newDifficulty);
+                });
+                
+                this.timeLeft = this.getTimeForMode();
+                this.generateNewWord();
+                this.updateDisplay();
+            }
+
+            changeGameMode(newMode) {
+                this.gameMode = newMode;
+                
+                this.elements.modeBtns.forEach(btn => {
+                    btn.classList.toggle('active', btn.dataset.mode === newMode);
+                });
+                
+                this.timeLeft = this.getTimeForMode();
+                this.updateDisplay();
+            }
+
+            checkLevelUp() {
+                const wordsPerLevel = 10;
+                const newLevel = Math.floor(this.wordsCompleted / wordsPerLevel) + 1;
+                
+                if (newLevel > this.level) {
+                    this.level = newLevel;
+                    this.sounds.levelUp();
+                    this.showAchievement('Level Up!', `Reached Level ${this.level}`, 'fas fa-arrow-up');
+                    
+                    this.powerUps.shuffle += 1;
+                    this.powerUps.reveal += 1;
+                    if (this.level % 5 === 0) {
+                        this.powerUps.timeBoost += 1;
+                    }
+                    
+                    this.updatePowerUpDisplay();
+                }
+            }
+
+            checkAchievements() {
+                const achievements = [
+                    { id: 'first_word', condition: () => this.wordsCompleted === 1, title: 'First Word!', desc: 'Solved your first word' },
+                    { id: 'streak_5', condition: () => this.streak === 5, title: 'On Fire!', desc: '5 words in a row' },
+                    { id: 'streak_10', condition: () => this.streak === 10, title: 'Unstoppable!', desc: '10 words in a row' },
+                    { id: 'combo_master', condition: () => this.combo >= 5, title: 'Combo Master!', desc: '5x combo achieved' },
+                    { id: 'speed_demon', condition: () => this.gameMode === 'speed' && this.wordsCompleted >= 5, title: 'Speed Demon!', desc: '5 words in speed mode' },
+                    { id: 'expert_solver', condition: () => this.difficulty === 'expert' && this.wordsCompleted >= 3, title: 'Expert Solver!', desc: '3 expert words solved' },
+                    { id: 'no_hints', condition: () => this.wordsCompleted >= 5 && this.hintsUsed === 0, title: 'Pure Skill!', desc: '5 words without hints' },
+                    { id: 'high_scorer', condition: () => this.score >= 1000, title: 'High Scorer!', desc: 'Reached 1000 points' }
+                ];
+                
+                achievements.forEach(achievement => {
+                    if (!this.achievements.includes(achievement.id) && achievement.condition()) {
+                        this.achievements.push(achievement.id);
+                        this.showAchievement(achievement.title, achievement.desc, 'fas fa-trophy');
+                    }
+                });
+            }
+
+            showAchievement(title, description, icon) {
+                const popup = document.createElement('div');
+                popup.className = 'achievement-popup';
+                popup.innerHTML = `
+                    <div class="achievement-icon"><i class="${icon}"></i></div>
+                    <div class="achievement-title">${title}</div>
+                    <div class="achievement-description">${description}</div>
+                `;
+                
+                document.body.appendChild(popup);
+                
+                setTimeout(() => {
+                    popup.remove();
+                }, 3000);
+            }
+
+            showCombo() {
+                this.elements.comboCount.textContent = this.combo;
+                this.elements.comboIndicator.classList.add('show');
+            }
+
+            createCelebration() {
+                const celebration = this.elements.celebration;
+                const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#ffeaa7', '#dda0dd'];
+                
+                for (let i = 0; i < 20; i++) {
+                    const confetti = document.createElement('div');
+                    confetti.className = 'confetti';
+                    confetti.style.left = Math.random() * 100 + '%';
+                    confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                    confetti.style.animationDelay = Math.random() * 2 + 's';
+                    confetti.style.animationDuration = (Math.random() * 2 + 2) + 's';
+                    
+                    celebration.appendChild(confetti);
+                    
+                    setTimeout(() => confetti.remove(), 4000);
+                }
+            }
+
+            showFeedback(message, type) {
+                this.elements.feedback.textContent = message;
+                this.elements.feedback.className = `feedback ${type}`;
+                this.elements.feedback.style.display = 'block';
+                
+                setTimeout(() => {
+                    this.elements.feedback.style.display = 'none';
+                }, 3000);
+            }
+
+            showLoading(show) {
+                this.elements.loadingIndicator.style.display = show ? 'flex' : 'none';
+                this.elements.scrambledWord.style.display = show ? 'none' : 'block';
+            }
+
+            updateDisplay() {
+                this.elements.level.textContent = this.level;
+                this.elements.score.textContent = this.score.toLocaleString();
+                this.elements.streak.textContent = this.streak;
+                this.elements.timer.textContent = this.timeLeft;
+                
+                if (this.timeLeft > 10) {
+                    this.elements.timer.style.color = '';
+                }
+                
+                const progress = (this.wordsCompleted % 10) / 10 * 100;
+                this.elements.progressFill.style.width = progress + '%';
+                this.elements.progressText.textContent = `${this.wordsCompleted % 10}/10`;
+                
+                this.elements.hintBtn.textContent = `Hint (${3 - this.hintsUsed} left)`;
+                this.elements.hintBtn.disabled = this.hintsUsed >= 3;
+            }
+
+            updatePowerUpDisplay() {
+                this.elements.shuffleCount.textContent = this.powerUps.shuffle;
+                this.elements.revealCount.textContent = this.powerUps.reveal;
+                this.elements.timeBoostCount.textContent = this.powerUps.timeBoost;
+                
+                this.elements.shuffleBtn.classList.toggle('used', this.powerUps.shuffle <= 0);
+                this.elements.revealBtn.classList.toggle('used', this.powerUps.reveal <= 0);
+                this.elements.timeBoostBtn.classList.toggle('used', this.powerUps.timeBoost <= 0);
+            }
+
+            toggleSettings() {
+                const isOpen = this.elements.settingsPanel.classList.contains('open');
+                
+                if (isOpen) {
+                    this.closeSettings();
+                } else {
+                    this.openSettings();
+                }
+            }
+
+            openSettings() {
+                this.elements.settingsPanel.classList.add('open');
+                this.elements.settingsOverlay.classList.add('open');
+                
+                if (this.gameActive) {
+                    this.pauseGame();
+                }
+            }
+
+            closeSettings() {
+                this.elements.settingsPanel.classList.remove('open');
+                this.elements.settingsOverlay.classList.remove('open');
+                
+                if (this.timeLeft > 0) {
+                    this.resumeGame();
+                }
+            }
+
+            toggleSound() {
+                this.settings.soundEnabled = !this.settings.soundEnabled;
+                this.updateSettingsUI();
+                this.saveGameData();
+            }
+
+            toggleMusic() {
+                this.settings.musicEnabled = !this.settings.musicEnabled;
+                this.updateSettingsUI();
+                this.saveGameData();
+            }
+
+            updateSettingsUI() {
+                this.elements.soundToggle.classList.toggle('active', this.settings.soundEnabled);
+                this.elements.musicToggle.classList.toggle('active', this.settings.musicEnabled);
+                
+                const soundIcon = this.elements.soundToggle.querySelector('i');
+                soundIcon.className = this.settings.soundEnabled ? 'fas fa-volume-up' : 'fas fa-volume-mute';
+                
+                const musicIcon = this.elements.musicToggle.querySelector('i');
+                musicIcon.className = this.settings.musicEnabled ? 'fas fa-music' : 'fas fa-music-slash';
+            }
+
+            updatePersonalBest() {
+                const personalBest = Math.max(this.statistics.totalScore, this.score);
+                this.elements.personalBest.textContent = personalBest.toLocaleString();
+            }
+
+            resetStatistics() {
+                if (confirm('Are you sure you want to reset all statistics? This cannot be undone.')) {
+                    this.statistics = {
+                        gamesPlayed: 0,
+                        totalScore: 0,
+                        bestStreak: 0,
+                        wordsGuessed: 0,
+                        averageTime: 0
+                    };
+                    this.achievements = [];
+                    this.saveGameData();
+                    this.updatePersonalBest();
+                    this.showFeedback('Statistics reset successfully!', 'info');
+                }
+            }
+
+            saveGameData() {
+                const gameData = {
+                    statistics: this.statistics,
+                    settings: this.settings,
+                    achievements: this.achievements
+                };
+                
+                try {
+                    localStorage.setItem('wordScrambleProData', JSON.stringify(gameData));
+                } catch (error) {
+                    console.error('Error saving game data:', error);
+                }
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            new WordScrambleGamePro();
+        });
+
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('data:application/javascript;base64,c2VsZi5hZGRFdmVudExpc3RlbmVyKCdpbnN0YWxsJywgZXZlbnQgPT4geyBzZWxmLnNraXBXYWl0aW5nKCk7IH0pOyBzZWxmLmFkZEV2ZW50TGlzdGVuZXIoJ2FjdGl2YXRlJywgZXZlbnQgPT4geyBldmVudC53YWl0VW50aWwoc2VsZi5jbGllbnRzLmNsYWltKCkpOyB9KTs=')
+                    .then(registration => console.log('SW registered'))
+                    .catch(error => console.log('SW registration failed'));
+            });
+        }
+    </script>
+</body>
+</html>
